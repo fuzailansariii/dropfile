@@ -12,12 +12,16 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.22.0",
+    "@hookform/resolvers": "^5.1.1",
     "@neondatabase/serverless": "^1.0.1",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.2",
     "next": "15.3.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.58.1",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

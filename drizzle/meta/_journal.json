@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1750239342835,
+      "tag": "0000_medical_magma",
+      "breakpoints": true
+    }
+  ]
+}
