@@ -12,11 +12,7 @@ export const signUpSchema = z
       .min(6, { message: "Password must be at least 6 characters" }),
     confirmPassword: z.string().min(1, { message: "Confirm your password" }),
   })
-  .refine(
-    (data) => {
-      data.password === data.confirmPassword;
-    },
-    {
-      path: ["confirmPassword"],
-    }
-  );
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Password do not match",
+    path: ["confirmPassword"],
+  });

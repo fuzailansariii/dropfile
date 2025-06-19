@@ -6,6 +6,10 @@ import { signUpSchema } from "@/schemas/signUpSchema";
 import { useSignUp } from "@clerk/nextjs";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import Input from "../../../components/input";
+import EmailIcon from "@/icons/EmailIcon";
+import KeyIcon from "@/icons/KeyIcon";
+import Container from "@/components/container";
 
 export default function SignUpForm() {
   const [verifying, setVerifying] = useState(false);
@@ -95,9 +99,53 @@ export default function SignUpForm() {
     }
   };
 
+  const formHandler = (data: z.infer<typeof signUpSchema>) => {
+    console.log(data);
+    reset();
+  };
   return (
-    <div>
-      <h1>SignUp Form</h1>
-    </div>
+    <Container>
+      <div className="card w-md bg-base-100 shadow-lg">
+        <div className="card-body w-full">
+          <h2 className="text-3xl font-bold text-center">Create an Account</h2>
+          <div className="mt-10">
+            <form
+              onSubmit={handleSubmit(formHandler)}
+              className="flex flex-col space-y-4"
+            >
+              <Input
+                icon={<EmailIcon />}
+                placeholder="Email"
+                error={errors.email?.message}
+                type="email"
+                register={register("email")}
+              />
+              <Input
+                icon={<KeyIcon />}
+                placeholder="Password"
+                error={errors.password?.message}
+                type="password"
+                register={register("password")}
+              />
+              <Input
+                icon={<KeyIcon />}
+                placeholder="Confirm password"
+                error={errors.confirmPassword?.message}
+                type="password"
+                register={register("confirmPassword")}
+              />
+              <div className="mt-4">
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-block rounded-md"
+                >
+                  {isSubmitting ? "Signing Up..." : "Sign Up"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </Container>
   );
 }
