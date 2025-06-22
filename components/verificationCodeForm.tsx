@@ -1,3 +1,4 @@
+"use client";
 import ErrorIcon from "@/icons/ErrorIcon";
 import React from "react";
 import Input from "./input";

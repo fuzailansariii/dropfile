@@ -146,6 +146,7 @@ export default function SignUpForm() {
                 register={register("confirmPassword")}
               />
               <div className="mt-4">
+                <div id="clerk-captcha" />
                 <button
                   type="submit"
                   className="btn btn-primary btn-block rounded-md"
