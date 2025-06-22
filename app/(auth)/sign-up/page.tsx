@@ -10,6 +10,8 @@ import Input from "../../../components/input";
 import EmailIcon from "@/icons/EmailIcon";
 import KeyIcon from "@/icons/KeyIcon";
 import Container from "@/components/container";
+import VerificationCodeForm from "@/components/verificationCodeForm";
+import { verificationCode } from "@/schemas/verificationSchema";
 
 export default function SignUpForm() {
   const [verifying, setVerifying] = useState(false);
@@ -18,7 +20,6 @@ export default function SignUpForm() {
   const [verificationError, setVerificationError] = useState<string | null>(
     null
   );
-  const [otp, setOtp] = useState<string>("");
   const { signUp, isLoaded, setActive } = useSignUp();
 
   const router = useRouter();
@@ -51,6 +52,7 @@ export default function SignUpForm() {
         strategy: "email_code",
       });
       setVerifying(true);
+      reset();
     } catch (error) {
       if (error instanceof Error) {
         setAuthError(error.message);
@@ -60,23 +62,20 @@ export default function SignUpForm() {
     } finally {
       setIsSubmitting(false);
       // Reset the form only if the sign-up was successful
-      reset();
     }
   };
 
   //   OTP Verification Handler
   const handleVerificationSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
+    data: z.infer<typeof verificationCode>
   ) => {
-    e.preventDefault();
     if (!isLoaded || !signUp) return;
     setIsSubmitting(true);
     setAuthError(null);
     try {
       const result = await signUp.attemptEmailAddressVerification({
-        code: otp,
+        code: data.code,
       });
-
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         // TODO: Toast success message
@@ -94,28 +93,40 @@ export default function SignUpForm() {
       }
     } finally {
       setIsSubmitting(false);
-      // Reset the OTP input field
-      setOtp("");
     }
   };
 
-  const formHandler = (data: z.infer<typeof signUpSchema>) => {
-    console.log(data);
-    reset();
-  };
+  if (verifying) {
+    return (
+      <Container>
+        <VerificationCodeForm
+          verificationError={verificationError}
+          handleVerificationSubmit={handleVerificationSubmit}
+          authError={authError}
+        />
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <div className="card w-md bg-base-100 shadow-lg">
         <div className="card-body w-full">
           <h2 className="text-3xl font-bold text-center">Create an Account</h2>
           <div className="mt-10">
+            {/* Display error message if there is any authentication error */}
+            {authError && (
+              <div role="alert" className="alert alert-error">
+                <span>{authError}</span>
+              </div>
+            )}
             <form
-              onSubmit={handleSubmit(formHandler)}
+              onSubmit={handleSubmit(onSubmit)}
               className="flex flex-col space-y-4"
             >
               <Input
                 icon={<EmailIcon />}
-                placeholder="Email"
+                placeholder="your.email@example.com"
                 error={errors.email?.message}
                 type="email"
                 register={register("email")}
@@ -138,6 +149,7 @@ export default function SignUpForm() {
                 <button
                   type="submit"
                   className="btn btn-primary btn-block rounded-md"
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? "Signing Up..." : "Sign Up"}
                 </button>

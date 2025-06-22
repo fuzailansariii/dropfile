@@ -3,7 +3,7 @@ import React from "react";
 import { UseFormRegisterReturn } from "react-hook-form";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   placeholder: string;
   type: string;
   register?: UseFormRegisterReturn; // Adjust type as needed for your form library
