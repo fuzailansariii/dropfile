@@ -26,9 +26,9 @@ export const files = pgTable("files", {
   parentId: text("parent_id"), // parent foler id
 
   // file/folder flags
-  idFolder: boolean("is_folder").default(false).notNull(),
+  isFolder: boolean("is_folder").default(false).notNull(),
   isStarred: boolean("is_starred").default(false).notNull(),
-  isTrasdhed: boolean("is_trashed").default(false).notNull(),
+  isTrashed: boolean("is_trashed").default(false).notNull(),
 
   //   timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),

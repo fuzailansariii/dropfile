@@ -14,16 +14,19 @@
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
     "@hookform/resolvers": "^5.1.1",
+    "@imagekit/next": "^2.1.2",
     "@neondatabase/serverless": "^1.0.1",
     "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.2",
+    "imagekit": "^6.0.0",
     "lucide-react": "^0.517.0",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.58.1",
     "tailwind-variants": "^1.0.0",
+    "uuid": "^11.1.0",
     "zod": "^3.25.67"
   },
   "devDependencies": {
