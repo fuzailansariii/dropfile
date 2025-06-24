@@ -6,7 +6,7 @@ import { signUpSchema } from "@/schemas/signUpSchema";
 import { useSignUp } from "@clerk/nextjs";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import Input from "../../../components/input";
+import Input from "../../../../components/input";
 import EmailIcon from "@/icons/EmailIcon";
 import KeyIcon from "@/icons/KeyIcon";
 import Container from "@/components/container";
