@@ -56,10 +56,12 @@ export default function SignInForm() {
   };
 
   return (
-    <Container>
+    <Container className="flex items-center justify-center min-h-[80vh]">
       <div className="card w-md bg-base-100 shadow-lg">
         <div className="card-body w-full">
-          <h2 className="text-3xl font-bold text-center">Sign In</h2>
+          <h2 className="text-3xl font-bold text-center font-nunito">
+            Sign In
+          </h2>
           <div className="mt-10">
             {authError && (
               <div role="alert" className="alert alert-error">

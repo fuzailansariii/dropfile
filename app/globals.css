@@ -3,6 +3,6 @@
   themes: light --default, dark --prefersdark, forest;
 }
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-quicksand: var(--font-quicksand);
+  --font-nunito: var(--font-nunito);
 }

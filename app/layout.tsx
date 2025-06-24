@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito, Quicksand } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ImageKitProviders } from "./providers/imageKitProvider";
+import Navbar from "@/components/navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const quicksand = Quicksand({
+  variable: "--font-quicksand",
   subsets: ["latin"],
 });
 
@@ -28,9 +29,12 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" data-theme="forest">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${quicksand.variable} ${nunito.variable} antialiased`}
         >
-          <ImageKitProviders>{children}</ImageKitProviders>
+          <ImageKitProviders>
+            <Navbar />
+            {children}
+          </ImageKitProviders>
         </body>
       </html>
     </ClerkProvider>
