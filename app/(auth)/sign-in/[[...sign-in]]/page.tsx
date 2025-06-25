@@ -41,7 +41,7 @@ export default function SignInForm() {
       if (result.status === "complete") {
         // Sign-in was successful, redirect to the home page or dashboard
         await setActive({ session: result.createdSessionId });
-        router.push("/");
+        router.push("/dashboard");
       } else {
         // Handle other statuses like "needs_second_factor" or "requires_action"
         setAuthError("Sign-in requires additional verification.");
