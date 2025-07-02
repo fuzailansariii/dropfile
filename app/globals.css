@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark, forest;
+  themes: light --default, dark --prefersdark, business;
 }
 @theme inline {
   --font-quicksand: var(--font-quicksand);
