@@ -48,12 +48,12 @@ export async function POST(req: NextRequest) {
             eq(files.isFolder, true)
           )
         );
-    }
-    if (!formParentId) {
-      return NextResponse.json(
-        { error: "Parent folder is not found" },
-        { status: 404 }
-      );
+      if (!parentFolder) {
+        return NextResponse.json(
+          { error: "Parent folder is not found" },
+          { status: 404 }
+        );
+      }
     }
 
     if (!file.type.startsWith("images/") && file.type !== "application/pdf") {

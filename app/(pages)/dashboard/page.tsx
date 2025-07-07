@@ -11,7 +11,12 @@ import {
   Trash,
   Upload,
 } from "lucide-react";
-import { files } from "@/lib/db/schema";
+import { useUser } from "@clerk/nextjs";
+import axios from "axios";
+import { set, z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { createFolderSchema } from "@/schemas/folderSchema";
 
 // Using Drizzle types
 type FileRecord = {
@@ -42,6 +47,48 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createFolderModal = useRef<HTMLDialogElement>(null);
 
+  const { user } = useUser();
+
+  // Form validation schema
+  const {
+    handleSubmit,
+    register,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(createFolderSchema),
+    defaultValues: {
+      folderName: "",
+    },
+  });
+
+  const handleFolderCreation = async (
+    data: z.infer<typeof createFolderSchema>
+  ) => {
+    setIsUploading(true);
+    try {
+      // console.log("FolderName", data.folderName);
+      const response = await axios.post("/api/folders/create", {
+        name: data.folderName,
+        userId: user?.id,
+        parentId: null, // Assuming top-level folder creation
+      });
+
+      if (response.status === 201) {
+        // Assuming the response contains the created folder data
+        const newFolder: FileRecord = response.data;
+        setFiles((prevFiles) => [...prevFiles, newFolder]);
+        setError(null);
+        reset(); // Reset the form after successful submission
+        closeModal();
+      }
+    } catch (error) {
+      console.error("Error Creating folder:", error);
+      setError("Failed to create folder");
+    } finally {
+      setIsUploading(false);
+    }
+  };
   const openModal = () => {
     if (createFolderModal.current) {
       createFolderModal.current.showModal();
@@ -141,16 +188,21 @@ export default function Dashboard() {
   return (
     <Container className="flex flex-col md:flex-row my-10 gap-10 px-5">
       {/* Upload section */}
-      <div className="card w-96 shadow-sm rounded-xl bg-base-300 py-10">
+      <div className="min-w-96 shadow-sm rounded-xl bg-base-300 py-10">
         <div className="card-body items-center text-center space-y-5">
           {/* Buttons to create and add files */}
 
           <dialog className="modal" ref={createFolderModal}>
             <div className="modal-box">
-              <form method="dialog" className="w-2/3 mx-auto py-7">
+              <form
+                method="dialog"
+                className="w-2/3 mx-auto py-7"
+                onSubmit={handleSubmit(handleFolderCreation)}
+              >
                 <button
                   onClick={closeModal}
                   className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                  type="button"
                 >
                   ✕
                 </button>
@@ -159,9 +211,19 @@ export default function Dashboard() {
                   type="text"
                   placeholder="Folder Name"
                   className="w-full rounded-lg input input-bordered mt-4"
+                  {...register("folderName")}
                 />
-                <button className="btn btn-secondary mt-5 w-full">
-                  Create Folder
+                {errors.folderName && (
+                  <span className="text-error text-sm">
+                    {errors.folderName.message as string}
+                  </span>
+                )}
+                <button
+                  className="btn btn-secondary mt-5 w-full"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Creating..." : "Create Folder"}
                 </button>
               </form>
             </div>
