@@ -1,6 +1,6 @@
 "use client";
 import Container from "@/components/container";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Button from "@/components/button";
 import {
   File,
@@ -17,9 +17,10 @@ import { set, z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { createFolderSchema } from "@/schemas/folderSchema";
+import FileFolderList from "@/components/FileFolderList";
 
 // Using Drizzle types
-type FileRecord = {
+export type FileRecord = {
   id: string;
   name: string;
   path: string;
@@ -37,6 +38,7 @@ type FileRecord = {
 };
 
 export default function Dashboard() {
+  // states
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -44,10 +46,38 @@ export default function Dashboard() {
     "all"
   );
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createFolderModal = useRef<HTMLDialogElement>(null);
 
   const { user } = useUser();
+
+  // Fetch files from the server when the component mounts
+  useEffect(() => {
+    if (user?.id) {
+      fetchFiles();
+    }
+  }, [user?.id]);
+
+  // Fetch files
+  const fetchFiles = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `/api/files?userId=${user?.id}&parentId=${currentFolder || ""}`
+      );
+      if (response.status === 200) {
+        setFiles(response.data.files || []);
+        setError(null);
+      }
+    } catch (error) {
+      setError("Failed to fetch files");
+      console.error("Error fetching files:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Form validation schema
   const {
@@ -62,6 +92,8 @@ export default function Dashboard() {
     },
   });
 
+  // Handle folder creation
+  // This function is called when the form is submitted
   const handleFolderCreation = async (
     data: z.infer<typeof createFolderSchema>
   ) => {
@@ -76,7 +108,11 @@ export default function Dashboard() {
 
       if (response.status === 201) {
         // Assuming the response contains the created folder data
-        const newFolder: FileRecord = response.data;
+        const newFolder: FileRecord = {
+          ...response.data.folder,
+          createdAt: new Date(response.data.folder.createdAt),
+          updatedAt: new Date(response.data.folder.updatedAt),
+        };
         setFiles((prevFiles) => [...prevFiles, newFolder]);
         setError(null);
         reset(); // Reset the form after successful submission
@@ -89,6 +125,7 @@ export default function Dashboard() {
       setIsUploading(false);
     }
   };
+  // Open and close modal functions
   const openModal = () => {
     if (createFolderModal.current) {
       createFolderModal.current.showModal();
@@ -101,6 +138,7 @@ export default function Dashboard() {
     }
   };
 
+  // file validation
   const allowedTypes = [
     "application/pdf",
     "image/jpeg",
@@ -121,6 +159,7 @@ export default function Dashboard() {
     return null;
   };
 
+  // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);
@@ -144,10 +183,12 @@ export default function Dashboard() {
       }
       setError(null);
       // setFiles(draggedFile);
-      console.log("File selected via drag and drop:", draggedFile);
+      // console.log("File selected via drag and drop:", draggedFile);
+      fileUploadHandler(draggedFile);
     }
   };
 
+  // Change file handler for file input
   const changeFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
@@ -159,7 +200,43 @@ export default function Dashboard() {
       }
       setError(null);
       // setFiles(selectedFile);
-      console.log("File selected via browse:", selectedFile);
+      // console.log("File selected via browse:", selectedFile);
+      fileUploadHandler(selectedFile);
+    }
+  };
+
+  const openFolder = (folderId: string) => {
+    setCurrentFolder(folderId);
+  };
+
+  // file uplaod section
+  const fileUploadHandler = async (file: File) => {
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("userId", user?.id || "");
+      if (currentFolder) {
+        formData.append("parentId", currentFolder);
+      }
+      const response = await axios.post("/api/files/upload", formData);
+
+      if (response.status === 201) {
+        // Assuming the response contains the uploaded file data
+        const newFile: FileRecord = {
+          ...response.data.file,
+          createdAt: new Date(response.data.file.createdAt),
+          updatedAt: new Date(response.data.file.updatedAt),
+        };
+        setFiles((prevFiles) => [...prevFiles, newFile]);
+        setError(null);
+        clearFile(); // Clear the file input after successful upload
+      }
+    } catch (error) {
+      setError("Failed to upload file");
+      console.error("Error uploading file:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -184,6 +261,8 @@ export default function Dashboard() {
   };
 
   const filterFile = getFilteredFiles();
+  const folders = filterFile.filter((f) => f.isFolder);
+  const filesOnly = filterFile.filter((f) => !f.isFolder);
 
   return (
     <Container className="flex flex-col md:flex-row my-10 gap-10 px-5">
@@ -290,17 +369,6 @@ export default function Dashboard() {
               <span>{error}</span>
             </div>
           )}
-          {/* On select file successfully */}
-          {/* {file && (
-            <div className="alert alert-success">
-              <div className="flex justify-between items-center w-full">
-                <span>File: {file.name}</span>
-                <button onClick={clearFile} className="btn btn-sm btn-ghost">
-                  ✕
-                </button>
-              </div>
-            </div>
-          )} */}
         </div>
       </div>
 
@@ -340,9 +408,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   // connect with your file list component
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols>3 lg:grid-cols-4 gap-4">
-                    <div>Files to upload here</div>
-                  </div>
+                  <FileFolderList files={filterFile} />
                 )}
               </div>
             )}
@@ -377,7 +443,24 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ) : (
-                  <div>Hello World</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {filterFile.map((file) => (
+                      <div
+                        key={file.id}
+                        className="bg-base-200 p-4 rounded-xl shadow"
+                      >
+                        <div className="font-semibold">{file.name}</div>
+                        <p className="text-xs text-gray-500">{file.type}</p>
+                        <a
+                          href={file.fileUrl}
+                          target="_blank"
+                          className="text-blue-500 text-sm underline"
+                        >
+                          Download
+                        </a>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}

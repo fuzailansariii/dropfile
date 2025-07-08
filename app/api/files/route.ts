@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
         .from(files)
         .where(and(eq(files.userId, userId), isNull(files.parentId)));
     }
-    return NextResponse.json(userFiles);
+    return NextResponse.json({ files: userFiles }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { error: "Error fetching files" },

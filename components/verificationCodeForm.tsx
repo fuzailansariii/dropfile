@@ -45,7 +45,7 @@ export default function VerificationCodeForm({
   const resendCode = async () => {
     try {
       // Logic to resend the verification code
-      console.log("Resending verification code...");
+      // console.log("Resending verification code...");
       if (signUp) {
         await signUp.prepareEmailAddressVerification({
           strategy: "email_code",

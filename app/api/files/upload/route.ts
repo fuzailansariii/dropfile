@@ -26,6 +26,10 @@ export async function POST(req: NextRequest) {
     const formUserId = formData.get("userId") as string;
     const formParentId = formData.get("parentId") as string;
 
+    // console.log("File received:", file?.name, file?.type);
+    // console.log("Form userId:", formUserId, "| Clerk userId:", userId);
+    // console.log("ParentId:", formParentId);
+
     if (formUserId !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -49,6 +53,7 @@ export async function POST(req: NextRequest) {
           )
         );
       if (!parentFolder) {
+        // console.log("Parent folder is not found");
         return NextResponse.json(
           { error: "Parent folder is not found" },
           { status: 404 }
@@ -56,7 +61,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!file.type.startsWith("images/") && file.type !== "application/pdf") {
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      // console.log("Invalid file type:", file.type);
       return NextResponse.json(
         {
           error: "Only images and pdf are allowed to upload",
@@ -76,6 +82,8 @@ export async function POST(req: NextRequest) {
     const fileExtention = originalFileName.split(".").pop() || "";
     const uniqueFileName = `${uuidv4()}.${fileExtention}`;
 
+    // console.log("Uploading to ImageKit:", uniqueFileName);
+
     const response = await imageKit.upload({
       file: fileBuffer,
       fileName: uniqueFileName,
@@ -83,11 +91,14 @@ export async function POST(req: NextRequest) {
       useUniqueFileName: false,
     });
 
+    // console.log("Upload success", response);
+
     const fileData = {
-      name: response.name,
+      name: file.name,
+      fileName: response.name,
       path: response.filePath,
       size: response.size,
-      type: response.fileType,
+      type: file.type,
       fileUrl: response.url,
       thumbnailUrl: response.thumbnailUrl,
       userId: userId,
@@ -99,8 +110,11 @@ export async function POST(req: NextRequest) {
 
     const newFile = await db.insert(files).values(fileData).returning();
 
-    return NextResponse.json(newFile);
-  } catch (error) {
+    // console.log("Saved in DB", newFile);
+
+    return NextResponse.json({ file: newFile }, { status: 201 });
+  } catch (error: any) {
+    // console.log("Upload API error", error);
     return NextResponse.json(
       { error: "failed to upload file" },
       { status: 500 }
