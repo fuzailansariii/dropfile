@@ -44,6 +44,7 @@ export default function FileFolderList({
     return a.isFolder ? -1 : 1;
   });
 
+  // This function toggles the star status of a file and calls the onAction callback if
   const handleStarClick = async (file: FileRecord) => {
     console.log(
       "Clicking star for file:",
@@ -65,6 +66,7 @@ export default function FileFolderList({
     } catch (error) {}
   };
 
+  // This function handles the trashing or restoring of a file and calls the onAction callback if
   const trashFileHandler = async (file: FileRecord) => {
     try {
       const response = await axios.patch(`/api/files/${file.id}/trash`);
