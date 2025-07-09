@@ -89,7 +89,7 @@ export default function FileFolderList({
         <ul key={index} className="list bg-base-100 rounded-box shadow-md">
           <li
             className={
-              "list-row flex items-center justify-between p-2 cursor-pointer hover:bg-base-200"
+              "list-row flex items-center justify-between md:p-2 cursor-pointer hover:bg-base-200"
             }
             onClick={() => file.isFolder && onClick?.(file)}
           >
@@ -113,7 +113,7 @@ export default function FileFolderList({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {!file.isFolder && file.fileUrl && (
+              {!file.isFolder && !file.isTrashed && file.fileUrl && (
                 <Link
                   href={file.fileUrl}
                   target="_blank"
@@ -157,16 +157,17 @@ export default function FileFolderList({
                   <Trash size={18} />
                 )}
               </button>
-              <button
-                className="btn btn-square btn-ghost"
-                title={file.isTrashed ? "Delete Permanently" : undefined}
-              >
-                {file.isTrashed && (
+
+              {file.isTrashed && (
+                <button
+                  className="btn btn-square btn-ghost"
+                  title={file.isTrashed ? "Delete Permanently" : undefined}
+                >
                   <span className="text-xs text-red-500">
                     <Trash2 size={18} />
                   </span>
-                )}
-              </button>
+                </button>
+              )}
             </div>
           </li>
         </ul>
