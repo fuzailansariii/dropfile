@@ -1,14 +1,32 @@
 "use client";
-import { FileRecord } from "@/app/(pages)/dashboard/page";
-import { Download, File, Folder, Star, Trash } from "lucide-react";
+import { FileRecord } from "@/types/file.types";
+import axios from "axios";
+import {
+  Download,
+  File,
+  Folder,
+  RotateCcw,
+  Star,
+  Trash,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
+import React from "react";
 
 interface FileListProps {
   onClick?: (file: FileRecord) => void;
   files: FileRecord[];
+  onAction?: (
+    fileId: string,
+    action: "star" | "unstar" | "trash" | "restore"
+  ) => void;
 }
 
-export default function FileFolderList({ onClick, files }: FileListProps) {
+export default function FileFolderList({
+  onClick,
+  files,
+  onAction,
+}: FileListProps) {
   const getFileExtension = (type: string): string => {
     const mapping: Record<string, string> = {
       "application/pdf": "PDF",
@@ -25,6 +43,43 @@ export default function FileFolderList({ onClick, files }: FileListProps) {
     if (a.isFolder === b.isFolder) return a.name.localeCompare(b.name);
     return a.isFolder ? -1 : 1;
   });
+
+  const handleStarClick = async (file: FileRecord) => {
+    console.log(
+      "Clicking star for file:",
+      file.id,
+      "Current isStarred:",
+      file.isStarred
+    );
+    if (file.isFolder) return;
+
+    try {
+      const response = await axios.patch(`/api/files/${file.id}/star`);
+      if (response.status !== 200) {
+        console.error("Failed to update star status:", response.data);
+        return;
+      }
+      const updatedFile = response.data.file;
+      const action = updatedFile.isStarred ? "star" : "unstar";
+      onAction?.(file.id, action);
+    } catch (error) {}
+  };
+
+  const trashFileHandler = async (file: FileRecord) => {
+    try {
+      const response = await axios.patch(`/api/files/${file.id}/trash`);
+      if (response.status !== 200) {
+        console.error("Failed to trash file:", response.data);
+        return;
+      }
+      console.log("File deleted successfully:", response.data);
+      const updateFile = response.data.file;
+      const action = updateFile.isTrashed ? "trash" : "restore";
+      onAction?.(file.id, action);
+    } catch (error) {
+      console.error("Error deleting file:", error);
+    }
+  };
 
   return (
     <div>
@@ -67,11 +122,48 @@ export default function FileFolderList({ onClick, files }: FileListProps) {
                   <Download size={18} />
                 </Link>
               )}
-              <button className="btn btn-square btn-ghost">
-                <Star size={18} />
+
+              {!file.isFolder && (
+                <button
+                  className="btn btn-square btn-ghost"
+                  title={file.isStarred ? "Unstar" : "Star"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStarClick(file);
+                  }}
+                >
+                  <Star
+                    size={18}
+                    className={
+                      file.isStarred ? "text-yellow-400" : "text-gray-400"
+                    }
+                    fill={file.isStarred ? "currentColor" : "none"}
+                  />
+                </button>
+              )}
+              <button
+                className="btn btn-square btn-ghost"
+                title={file.isStarred ? "Trash" : "Restore"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  trashFileHandler(file);
+                }}
+              >
+                {file.isTrashed ? (
+                  <RotateCcw size={18} className="text-red-500" />
+                ) : (
+                  <Trash size={18} />
+                )}
               </button>
-              <button className="btn btn-square btn-ghost">
-                <Trash size={18} />
+              <button
+                className="btn btn-square btn-ghost"
+                title={file.isTrashed ? "Delete Permanently" : undefined}
+              >
+                {file.isTrashed && (
+                  <span className="text-xs text-red-500">
+                    <Trash2 size={18} />
+                  </span>
+                )}
               </button>
             </div>
           </li>

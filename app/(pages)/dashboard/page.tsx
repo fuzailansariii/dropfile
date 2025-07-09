@@ -13,29 +13,14 @@ import {
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import axios from "axios";
-import { set, z } from "zod";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { createFolderSchema } from "@/schemas/folderSchema";
 import FileFolderList from "@/components/FileFolderList";
-
-// Using Drizzle types
-export type FileRecord = {
-  id: string;
-  name: string;
-  path: string;
-  size: number;
-  type: string;
-  fileUrl: string;
-  thumbnailUrl: string | null;
-  userId: string;
-  parentId: string | null;
-  isFolder: boolean;
-  isStarred: boolean;
-  isTrashed: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import { FileRecord } from "@/types/file.types";
+import { validateFile } from "@/utils/fileValidation";
+import Link from "next/link";
 
 export default function Dashboard() {
   // states
@@ -138,27 +123,6 @@ export default function Dashboard() {
     }
   };
 
-  // file validation
-  const allowedTypes = [
-    "application/pdf",
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-  ];
-  const maxSize = 5 * 1024 * 1024;
-
-  const validateFile = (file: File): string | null => {
-    if (file.size > maxSize) {
-      return "File should be less than 5MB";
-    }
-
-    if (!allowedTypes.includes(file.type)) {
-      return "Only PDF, JPG, and PNG files are allowed";
-    }
-
-    return null;
-  };
-
   // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -182,7 +146,6 @@ export default function Dashboard() {
         return;
       }
       setError(null);
-      // setFiles(draggedFile);
       // console.log("File selected via drag and drop:", draggedFile);
       fileUploadHandler(draggedFile);
     }
@@ -199,7 +162,6 @@ export default function Dashboard() {
         return;
       }
       setError(null);
-      // setFiles(selectedFile);
       // console.log("File selected via browse:", selectedFile);
       fileUploadHandler(selectedFile);
     }
@@ -263,6 +225,33 @@ export default function Dashboard() {
   const filterFile = getFilteredFiles();
   const folders = filterFile.filter((f) => f.isFolder);
   const filesOnly = filterFile.filter((f) => !f.isFolder);
+
+  const handleFileAction = (
+    fileId: string,
+    action: "star" | "unstar" | "trash" | "restore"
+  ) => {
+    setFiles((prevFiles) =>
+      prevFiles.map((file) =>
+        file.id === fileId
+          ? {
+              ...file,
+              isStarred:
+                action === "star"
+                  ? true
+                  : action === "unstar"
+                  ? false
+                  : file.isStarred,
+              isTrashed:
+                action === "trash"
+                  ? true
+                  : action === "restore"
+                  ? false
+                  : file.isTrashed,
+            }
+          : file
+      )
+    );
+  };
 
   return (
     <Container className="flex flex-col md:flex-row my-10 gap-10 px-5">
@@ -408,7 +397,10 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   // connect with your file list component
-                  <FileFolderList files={filterFile} />
+                  <FileFolderList
+                    files={filterFile}
+                    onAction={handleFileAction}
+                  />
                 )}
               </div>
             )}
@@ -443,24 +435,10 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {filterFile.map((file) => (
-                      <div
-                        key={file.id}
-                        className="bg-base-200 p-4 rounded-xl shadow"
-                      >
-                        <div className="font-semibold">{file.name}</div>
-                        <p className="text-xs text-gray-500">{file.type}</p>
-                        <a
-                          href={file.fileUrl}
-                          target="_blank"
-                          className="text-blue-500 text-sm underline"
-                        >
-                          Download
-                        </a>
-                      </div>
-                    ))}
-                  </div>
+                  <FileFolderList
+                    files={filterFile}
+                    onAction={handleFileAction}
+                  />
                 )}
               </div>
             )}
@@ -494,7 +472,10 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ) : (
-                  <div>Hello World</div>
+                  <FileFolderList
+                    files={filterFile}
+                    onAction={handleFileAction}
+                  />
                 )}
               </div>
             )}

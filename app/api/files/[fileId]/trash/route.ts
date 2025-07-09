@@ -34,11 +34,11 @@ export async function PATCH(
     const updateFiles = await db
       .update(files)
       .set({ isTrashed: !file.isTrashed })
-      .where(and(eq(files.userId, userId)))
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)))
       .returning();
 
     const updatedFile = updateFiles[0];
-    return NextResponse.json(updatedFile);
+    return NextResponse.json({ file: updatedFile });
   } catch (error) {
     return NextResponse.json(
       { error: "Error during updating the file" },

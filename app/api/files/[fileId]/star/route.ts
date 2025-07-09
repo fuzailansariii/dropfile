@@ -33,12 +33,12 @@ export async function PATCH(
 
     const updatedFiles = await db
       .update(files)
-      .set({ isStarred: file.isStarred })
-      .where(and(eq(files.userId, userId)))
+      .set({ isStarred: !file.isStarred })
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)))
       .returning();
 
     const updatedFile = updatedFiles[0];
-    return NextResponse.json(updatedFile);
+    return NextResponse.json({ file: updatedFile });
   } catch (error) {
     return NextResponse.json(
       { error: "Error during updating the file" },
