@@ -228,8 +228,13 @@ export default function Dashboard() {
 
   const handleFileAction = (
     fileId: string,
-    action: "star" | "unstar" | "trash" | "restore"
+    action: "star" | "unstar" | "trash" | "restore" | "delete"
   ) => {
+    if (action === "delete") {
+      // Optionally handle permanent delete here if needed
+      setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+      return;
+    }
     setFiles((prevFiles) =>
       prevFiles.map((file) =>
         file.id === fileId

@@ -11,14 +11,15 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
+import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 
 interface FileListProps {
   onClick?: (file: FileRecord) => void;
   files: FileRecord[];
   onAction?: (
     fileId: string,
-    action: "star" | "unstar" | "trash" | "restore"
+    action: "star" | "unstar" | "trash" | "restore" | "delete"
   ) => void;
 }
 
@@ -27,6 +28,14 @@ export default function FileFolderList({
   files,
   onAction,
 }: FileListProps) {
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    file: FileRecord | null;
+  }>({
+    isOpen: false,
+    file: null,
+  });
+
   const getFileExtension = (type: string): string => {
     const mapping: Record<string, string> = {
       "application/pdf": "PDF",
@@ -74,12 +83,39 @@ export default function FileFolderList({
         console.error("Failed to trash file:", response.data);
         return;
       }
-      console.log("File deleted successfully:", response.data);
+      console.log("File trashed/restored successfully:", response.data);
       const updateFile = response.data.file;
       const action = updateFile.isTrashed ? "trash" : "restore";
       onAction?.(file.id, action);
     } catch (error) {
+      console.error("Error trashing file:", error);
+    }
+  };
+
+  // Updated delete handler
+  const handleDeleteFile = async (file: FileRecord) => {
+    setDeleteModal({ isOpen: true, file });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.file) return;
+
+    try {
+      const response = await axios.delete(
+        `/api/files/${deleteModal.file.id}/delete`
+      );
+      if (response.status === 200) {
+        console.log("File deleted successfully:", response.data);
+        onAction?.(deleteModal.file.id, "delete");
+      } else {
+        console.error("Failed to delete file:", response.data);
+        alert("Failed to delete file. Please try again.");
+      }
+    } catch (error) {
       console.error("Error deleting file:", error);
+      alert("An error occurred while deleting the file. Please try again.");
+    } finally {
+      setDeleteModal({ isOpen: false, file: null });
     }
   };
 
@@ -145,7 +181,7 @@ export default function FileFolderList({
               )}
               <button
                 className="btn btn-square btn-ghost"
-                title={file.isStarred ? "Trash" : "Restore"}
+                title={file.isTrashed ? "Restore" : "Trash"}
                 onClick={(e) => {
                   e.stopPropagation();
                   trashFileHandler(file);
@@ -161,17 +197,29 @@ export default function FileFolderList({
               {file.isTrashed && (
                 <button
                   className="btn btn-square btn-ghost"
-                  title={file.isTrashed ? "Delete Permanently" : undefined}
+                  title="Delete Permanently"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteFile(file);
+                  }}
                 >
-                  <span className="text-xs text-red-500">
-                    <Trash2 size={18} />
-                  </span>
+                  <Trash2 size={18} className="text-red-500" />
                 </button>
               )}
             </div>
           </li>
         </ul>
       ))}
+      <div>
+        {/* Your existing file list */}
+
+        <ConfirmDeleteModal
+          isOpen={deleteModal.isOpen}
+          fileName={deleteModal.file?.name || ""}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteModal({ isOpen: false, file: null })}
+        />
+      </div>
     </div>
   );
 }
