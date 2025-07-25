@@ -21,6 +21,7 @@ import FileFolderList from "@/components/FileFolderList";
 import { FileRecord } from "@/types/file.types";
 import { validateFile } from "@/utils/fileValidation";
 import Link from "next/link";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 
 export default function Dashboard() {
   // states
@@ -258,6 +259,19 @@ export default function Dashboard() {
     );
   };
 
+  const handleDeleteAll = async () => {
+    try {
+      const response = await axios.delete("/api/files/delete-all");
+      if (response.status === 200) {
+        setFiles((prevFiles) => prevFiles.filter((file) => !file.isTrashed));
+        setError(null);
+      }
+    } catch (error) {
+      console.error("Error deleting all trashed files:", error);
+      setError("Failed to delete all trashed files");
+    }
+  };
+
   return (
     <Container className="flex flex-col md:flex-row my-10 gap-10 px-5">
       {/* Upload section */}
@@ -477,10 +491,20 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ) : (
-                  <FileFolderList
-                    files={filterFile}
-                    onAction={handleFileAction}
-                  />
+                  <>
+                    <div className="flex justify-end mb-4 m-4">
+                      <button
+                        className="btn btn-error btn-sm"
+                        onClick={handleDeleteAll}
+                      >
+                        Delete all
+                      </button>
+                    </div>
+                    <FileFolderList
+                      files={filterFile}
+                      onAction={handleFileAction}
+                    />
+                  </>
                 )}
               </div>
             )}

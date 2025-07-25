@@ -27,7 +27,15 @@ export async function DELETE(
       .from(files)
       .where(and(eq(files.id, fileId), eq(files.userId, userId)));
     if (!file) {
-      return NextResponse.json({ error: "file not found" }, { status: 404 });
+      return NextResponse.json({ error: "File not found" }, { status: 404 });
+    }
+    if (!file.isTrashed) {
+      return NextResponse.json(
+        {
+          error: "File must be moved to trash before permanent deletion",
+        },
+        { status: 400 }
+      );
     }
 
     // if file exist then delete it.
